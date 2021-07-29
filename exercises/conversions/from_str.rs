@@ -3,6 +3,7 @@
 // on strings to generate an object of the implementor type.
 // You can read more about it at https://doc.rust-lang.org/std/str/trait.FromStr.html
 use std::error;
+use std::fmt;
 use std::str::FromStr;
 
 #[derive(Debug)]
@@ -11,7 +12,6 @@ struct Person {
     age: usize,
 }
 
-// I AM NOT DONE
 
 // Steps:
 // 1. If the length of the provided string is 0, an error should be returned
@@ -20,12 +20,41 @@ struct Person {
 // 4. Extract the first element from the split operation and use it as the name
 // 5. Extract the other element from the split operation and parse it into a `usize` as the age
 //    with something like `"4".parse::<usize>()`
-// 6. If while extracting the name and the age something goes wrong, an error should be returned
+// 5. If while extracting the name and the age something goes wrong, an error should be returned
 // If everything goes well, then return a Result of a Person object
+#[derive(Debug)]
+struct EmptyError {}
+impl fmt::Display for EmptyError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "empty")
+    }
+}
+impl error::Error for EmptyError {}
+
+#[derive(Debug)]
+struct FormatError {}
+impl fmt::Display for FormatError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "format")
+    }
+}
+impl error::Error for FormatError {}
 
 impl FromStr for Person {
     type Err = Box<dyn error::Error>;
     fn from_str(s: &str) -> Result<Person, Self::Err> {
+        let res: Vec<&str> = s.split(',').collect();
+        if res.len() != 2 {
+            return Err(Box::new(FormatError{}))
+        }
+        if res[0] == "" {
+            return Err(Box::new(EmptyError{}))
+        }
+        if let Ok(age) = res[1].parse::<usize>() {
+            Ok(Person{name: res[0].to_string(), age: age})
+        } else {
+            Err(Box::new(FormatError{}))
+        }
     }
 }
 

@@ -4,6 +4,7 @@
 // You can read more about it at https://doc.rust-lang.org/std/convert/trait.TryFrom.html
 use std::convert::{TryFrom, TryInto};
 use std::error;
+use std::fmt;
 
 #[derive(Debug, PartialEq)]
 struct Color {
@@ -12,7 +13,6 @@ struct Color {
     blue: u8,
 }
 
-// I AM NOT DONE
 
 // Your task is to complete this implementation
 // and return an Ok result of inner type Color.
@@ -24,21 +24,70 @@ struct Color {
 // Also note that correct RGB color values must be integers in the 0..=255 range.
 
 // Tuple implementation
+#[derive(Debug)]
+struct LengthError {
+    l: u32,
+}
+impl LengthError {
+    fn new(i: u32) -> LengthError {
+        LengthError {
+            l: i
+        }
+    }
+}
+impl fmt::Display for LengthError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "length is {}", self.l)
+    }
+}
+
+impl error::Error for LengthError {}
+
+#[derive(Debug)]
+struct RangeError {}
+impl RangeError {
+    fn new() -> RangeError {
+        RangeError{}
+    }
+}
+impl error::Error for RangeError {}
+impl fmt::Display for RangeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "range is wrong")
+    }
+}
+
 impl TryFrom<(i16, i16, i16)> for Color {
     type Error = Box<dyn error::Error>;
-    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {}
+    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
+        if (tuple.0 <= 255 && tuple.0 >=0) && 
+        (tuple.1 <= 255 && tuple.1 >=0) &&
+        (tuple.2 <= 255 && tuple.2 >=0) {
+            Ok(Color{red: tuple.0 as u8, green: tuple.1 as u8, blue: tuple.2 as u8})
+        } else {
+            Err(Box::new(RangeError::new()))
+        }
+    }
 }
 
 // Array implementation
 impl TryFrom<[i16; 3]> for Color {
     type Error = Box<dyn error::Error>;
-    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {}
+    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
+        Color::try_from((arr[0], arr[1], arr[2]))
+    }
 }
 
 // Slice implementation
 impl TryFrom<&[i16]> for Color {
     type Error = Box<dyn error::Error>;
-    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {}
+    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+        if slice.len() == 3 {
+            Color::try_from((slice[0], slice[1], slice[2]))
+        } else {
+            Err(Box::new(LengthError::new(slice.len() as u32)))
+        }
+    }
 }
 
 fn main() {
